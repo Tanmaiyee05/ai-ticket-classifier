@@ -1,0 +1,286 @@
+{
+  "name": "Ticket Classifier",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "incoming-ticket",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        -940,
+        -500
+      ],
+      "id": "0dda9380-ad45-40de-a123-06556913685f",
+      "name": "Webhook",
+      "webhookId": "e7fee026-628b-484d-af9c-ee2353c249c9"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "1395e529-21a4-4464-92ad-2d8aef3daa2d",
+              "leftValue": "={{$json.urgency}}",
+              "rightValue": "high",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -220,
+        -500
+      ],
+      "id": "927e7cc2-293f-49ec-8bac-1ea5855619a3",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "sendTo": "thrivepath0506@gmail.com",
+        "subject": "=⚠️ Urgent Ticket: {{$('Edit Fields').item.json.category}}",
+        "message": "=<p>Hello!</p>\n\n<p>{{ $json.output }}</p>\n\n<p>Best regards,<br>\nSupport Team</p>",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        380,
+        -520
+      ],
+      "id": "09c4066b-e71e-485e-8fe4-5b5f9e0dee34",
+      "name": "Gmail",
+      "webhookId": "a27f96ea-9bc0-4ba9-ad40-1fb412cd186a",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "0KhTwhZSoGP7gi2T",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "98888e13-4ad6-403f-90b7-7f741b872816",
+              "name": "category",
+              "value": "={{ JSON.parse($json.output).category }}",
+              "type": "string"
+            },
+            {
+              "id": "128fe0b2-6c7a-4d35-af75-e654e243acea",
+              "name": "urgency",
+              "value": "={{ JSON.parse($json.output).urgency }}",
+              "type": "string"
+            },
+            {
+              "id": "56e29797-ab0c-437b-8684-fd9d9949d799",
+              "name": "message",
+              "value": "={{ $node[\"Webhook\"].json[\"body\"][\"message\"] }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -380,
+        -500
+      ],
+      "id": "c0d40183-b232-46df-9999-5d721c57a217",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{$json.body.message}}",
+        "options": {
+          "systemMessage": "You are a support ticket classifier. Given a user message, reply only in this exact JSON format:\n{\n  \"category\": \"billing|technical|feedback\",\n  \"urgency\": \"high|low\"\n}\nOnly include this JSON in your response. No explanation or extra text."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1.9,
+      "position": [
+        -700,
+        -500
+      ],
+      "id": "bf157a13-c2c2-4136-a5b7-12526693e746",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-4o-mini"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        -700,
+        -280
+      ],
+      "id": "d106e9cf-0cd4-405a-bb1a-56bf3d21499a",
+      "name": "OpenAI Chat Model",
+      "credentials": {
+        "openAiApi": {
+          "id": "UP69mwU6XwRvZ7FG",
+          "name": "My OpenAI Credential"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{$json.message}}",
+        "options": {
+          "systemMessage": "You are a helpful support assistant. Given a user message, generate a professional response following this format:\n\nThank you for reaching out about your [issue type] issue. We understand this is urgent.\n\n[2-3 sentences addressing their specific concern and what will be done]\n\nDo not include any greetings or sign-offs as these are added automatically."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1.9,
+      "position": [
+        20,
+        -520
+      ],
+      "id": "6c697839-5283-439b-8714-f5c0bf631225",
+      "name": "AI Agent1"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-4o-mini"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        -340
+      ],
+      "id": "6e86f537-a6cd-4140-a4aa-85b16267775f",
+      "name": "OpenAI Chat Model1",
+      "credentials": {
+        "openAiApi": {
+          "id": "PabBah8UhJ2lFVFG",
+          "name": "OpenAi account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "AI Agent1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent1": {
+      "main": [
+        [
+          {
+            "node": "Gmail",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model1": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent1",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "f5a835bb-f49a-45fb-b763-98723b4cb036",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "9feedd08e7044ab2bb656aa55bea80919317b52f9ffe4b91616a0c41541c5fb4"
+  },
+  "id": "v02IIpFWNCepWq6Q",
+  "tags": []
+}
